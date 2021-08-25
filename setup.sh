@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if [ "$#" -ne 1 ]
+then
+  echo "Provide a name for your project (./setup.sh myproject)"
+  exit 1
+fi
+
 FOLDER_BEDROCK="wordpress-$1"
 FOLDER_THEME="theme-$1"
 THEME_NAME="${1^}"
@@ -11,7 +17,13 @@ composer create-project roots/bedrock $FOLDER_BEDROCK
 cd "./$FOLDER_BEDROCK/web/app/themes"
 composer create-project roots/sage $FOLDER_THEME
 
-cd ../../../
+# Install wordpress-abstract-objects
+cd "./$FOLDER_THEME/app"
+git clone --depth 1 git@github.com:Treast/wordpress-abstract-objects.git tmp/
+mv tmp/* ./
+rm -rf ./tmp
+
+cd ../../../../../
 
 # Add Docker configuration files
 wget https://gist.githubusercontent.com/Treast/cfebc89ce361f988fd45fe91d8d618b0/raw/Dockerfile
@@ -21,7 +33,7 @@ wget https://gist.githubusercontent.com/Treast/cfebc89ce361f988fd45fe91d8d618b0/
 cd ./web
 wget https://gist.githubusercontent.com/Treast/cfebc89ce361f988fd45fe91d8d618b0/raw/.htaccess
 
-# Change configuration
+# Change configuration to include plugin installation & Redis
 cd ../../
 CONFIG_MATCH="Config::define('DISALLOW_INDEXING', true);"
 CONFIG_INSERT="Config::define('FS_METHOD', 'direct');\n\n\/\/ Redis configuration\nConfig::define('WP_REDIS_HOST', 'redis');\nConfig::define('WP_REDIS_PORT', 6379);\nConfig::define('WP_REDIS_TIMEOUT', 1);\nConfig::define('WP_REDIS_READ_TIMEOUT', 1);\nConfig::define('WP_REDIS_DATABASE', 0);"
